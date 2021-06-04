@@ -89,7 +89,7 @@ class Scraper:
 
             while not successful:
                 try:
-                    rs = [fs.get(url, timeout=10), fs.post("https://www.kickstarter.com/graph", proxies=proxyDict,
+                    rs = [fs.get(url, timeout=10), fs.post("https://www.kickstarter.com/graph", proxies=self.proxyDict,
                                                            headers=headers,
                                                            json={
                                                                "operationName": "Campaign",
@@ -190,7 +190,7 @@ class Scraper:
                                 self.proxy_list = req_proxy.get_proxy_list()
                             http_proxy = 'http://' + proxy
                             https_proxy = 'https://' + proxy
-                            proxyDict = {
+                            self.proxyDict = {
                                 "http": http_proxy,
                                 "https": https_proxy,
                             }
@@ -217,7 +217,7 @@ class Scraper:
                             proxy_list = req_proxy.get_proxy_list()
                         http_proxy = 'http://' + proxy
                         https_proxy = 'https://' + proxy
-                        proxyDict = {
+                        self.proxyDict = {
                             "http": http_proxy,
                             "https": https_proxy,
                         }
@@ -231,7 +231,7 @@ class Scraper:
                             self.proxy_list = req_proxy.get_proxy_list()
                         http_proxy = 'http://' + proxy
                         https_proxy = 'https://' + proxy
-                        proxyDict = {
+                        self.proxyDict = {
                             "http": http_proxy,
                             "https": https_proxy,
                         }
