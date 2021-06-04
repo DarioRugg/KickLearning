@@ -9,60 +9,57 @@ import cchardet
 import lxml
 from numpy import random
 from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
+import sys
 
 
 # ----------------------- Scraping -----------------------
-req_proxy = RequestProxy()
-proxy_list = req_proxy.get_proxy_list()
 
-# %%
-
-table = pd.read_csv('/content/drive/MyDrive/Project/Data/datasets/' + name)
-table = table[[colname for colname in table.columns if 'Unnamed:' not in colname]]
-
-# %%
-
-scraped_path = '/content/drive/MyDrive/Project/Data/Scraped/'
-
-if not path.exists(scraped_path):
-    mkdir(scraped_path)
-
-scraped_filename = scraped_path + name[:name.find('.csv')] + '_scraped.csv'
-
-old_cols = table.columns.to_list()
-
-scrape_cols = ['image', 'has_video', 'n_tiers', 'tiers_values', 'n_images', ' n_gifs',
-               'n_websites', 'fb_linked', 'n_collab', 'collab_names']
-cols = old_cols + scrape_cols
-df = pd.DataFrame(columns=cols)
-
-if path.exists(scraped_filename):
-    df = pd.read_csv(scraped_filename)
-    # cut table to restart after last index of previous run
-    table = table[df.index.stop:]
-
-
-# ----------------------- Scraping -----------------------
 
 class Scraper:
-    def __init__(self, data_path: str):
+    def __init__(self, data_path: str, file_name: str):
         """
         Initializing the parameters
         :param data_path: path of the data directory on Google drive
+        :param file_name: Name of the original csv file to be scraped
         """
 
-        self.data_path = data_path
+        self.filename = file_name
+        self.datasets = path.join(datapath, 'datasets')
+        self.scraped = path.join(datapath, 'Scraped')
 
+        req_proxy = RequestProxy()
+        self.proxy_list = req_proxy.get_proxy_list()
         http_proxy = None
         https_proxy = None
-        proxy = None
         self.proxyDict = {
             "http": http_proxy,
             "https": https_proxy,
         }
+        self.import_data()
+
+    def import_data(self):
+        self.scraped_filename = path.join(self.scraped, self.filename[:self.filename.find('.csv')] + '_scraped.csv')
+        if not path.exists(self.scraped):
+            mkdir(self.scraped)
+
+        self.table = pd.read_csv(path.join(self.datasets, self.filename))
+        self.table = self.table[[colname for colname in self.table.columns if 'Unnamed:' not in colname]]
+
+        old_cols = self.table.columns.to_list()
+
+        scrape_cols = ['image', 'has_video', 'story', 'risks', 'creator_bio', 'n_tiers', 'tiers_values',
+                       'n_images', ' n_gifs', 'n_websites', 'fb_linked', 'n_collab',
+                       'collab_names']
+        self.cols = old_cols + scrape_cols
+        self.df = pd.DataFrame(columns=self.cols)
+        if path.exists(self.scraped_filename):
+            self.df = pd.read_csv(self.scraped_filename)
+            # cut table to restart after last index of previous run
+            self.table = self.table[self.df.index.stop:]
 
     def scrape(self):
 
+        global i
         start = time.time()
         k = False
         fs = FuturesSession()
@@ -82,28 +79,25 @@ class Scraper:
         }"""
 
         last_10 = []
-        c = 0
-
-
-        for i, row in table.iterrows():
-            url = eval(row['urls'])['web']['project']
-            succesful = False
+        for i, row in self.table.iterrows():
+            url = row['project_url']
+            successful = False
             page = time.time()
             slug = re.search('/projects/(.*)\?', url).group(1)
             url = re.search('(.*)\?', url).group(1)
             print(f"------ Page {i}: {slug} ------")
 
-            while not succesful:
+            while not successful:
                 try:
-                    rs = [fs.get(url), fs.post("https://www.kickstarter.com/graph", proxies=self.proxyDict,
-                                               headers=headers,
-                                               json={
-                                                   "operationName": "Campaign",
-                                                   "variables": {
-                                                       "slug": slug
-                                                   },
-                                                   "query": query
-                                               })]
+                    rs = [fs.get(url, timeout=10), fs.post("https://www.kickstarter.com/graph", proxies=proxyDict,
+                                                           headers=headers,
+                                                           json={
+                                                               "operationName": "Campaign",
+                                                               "variables": {
+                                                                   "slug": slug
+                                                               },
+                                                               "query": query
+                                                           }, timeout=25)]
 
                     time.sleep(1.5)
                     r = None
@@ -162,7 +156,6 @@ class Scraper:
                             tiers_values.append('0')
                     n_tiers = len(tiers_values)
 
-                    # time.sleep(random.lognormal(mean = 0.1, sigma=0.25))
                     r = None
                     r = rs[1].result()
                     result = r.json()
@@ -177,12 +170,11 @@ class Scraper:
 
                     risks = result["data"]["project"]["risks"]
 
-                    # time.sleep(random.lognormal(mean = 0.1, sigma=0.25))
-
-                    df.loc[i] = pd.Series(
-                        table.loc[i].values.tolist() + [image, has_video, n_tiers, tiers_values, n_images, n_gifs, websites,
-                                                        fb_linked, n_collab, collab_names], index=cols)
-                    succesful = True
+                    self.df.loc[i] = pd.Series(
+                        self.table.loc[i].values.tolist() + [image, has_video, story_text, risks, bio_text, n_tiers,
+                                                             tiers_values, n_images, n_gifs, websites,
+                                                             fb_linked, n_collab, collab_names], index=self.cols)
+                    successful = True
                     if time.time() - page < 2:
                         time.sleep(2 - (time.time() - page))
                     print('Time for this page was {}s'.format(round(time.time() - page, 2)))
@@ -192,10 +184,10 @@ class Scraper:
                         last_10.pop(0)
                         if sum([x >= 5 for x in last_10]) >= 5:
                             print('Proxy too slow')
-                            proxy = proxy_list.pop(random.choice(len(proxy_list))).get_address()
-                            if len(proxy_list) == 0:
+                            proxy = self.proxy_list.pop(random.choice(len(self.proxy_list))).get_address()
+                            if len(self.proxy_list) == 0:
                                 req_proxy = RequestProxy()
-                                proxy_list = req_proxy.get_proxy_list()
+                                self.proxy_list = req_proxy.get_proxy_list()
                             http_proxy = 'http://' + proxy
                             https_proxy = 'https://' + proxy
                             proxyDict = {
@@ -214,13 +206,13 @@ class Scraper:
                     if r and r.status_code == 200:
                         time.sleep(1.5)
                         print('Problems parsing, scraping skipped!!')
-                        df.loc[i] = pd.Series(table.loc[i].values.tolist(), index=old_cols)
-                        succesful = True
+                        self.df.loc[i] = self.table.loc[i]
+                        successful = True
                     elif r and r.status_code == 429:
                         print("Too many requests, rotate ip")
                         time.sleep(5)
-                        proxy = proxy_list.pop(random.choice(len(good_proxies))).get_address()
-                        if len(proxy_list) == 0:
+                        proxy = self.proxy_list.pop(random.choice(len(self.proxy_list))).get_address()
+                        if len(self.proxy_list) == 0:
                             req_proxy = RequestProxy()
                             proxy_list = req_proxy.get_proxy_list()
                         http_proxy = 'http://' + proxy
@@ -233,10 +225,10 @@ class Scraper:
                     else:
                         print("Bad Proxy")
                         time.sleep(5)
-                        proxy = proxy_list.pop(random.choice(len(proxy_list))).get_address()
-                        if len(proxy_list) == 0:
+                        proxy = self.proxy_list.pop(random.choice(len(self.proxy_list))).get_address()
+                        if len(self.proxy_list) == 0:
                             req_proxy = RequestProxy()
-                            proxy_list = req_proxy.get_proxy_list()
+                            self.proxy_list = req_proxy.get_proxy_list()
                         http_proxy = 'http://' + proxy
                         https_proxy = 'https://' + proxy
                         proxyDict = {
@@ -248,9 +240,16 @@ class Scraper:
                 break
 
             if i % 500 == 0:
-                print(f'\n\n ----- Reached Page {i}, saving dataframe to {scraped_filename} ----- \n\n')
-                df.to_csv(scraped_filename, index=False)
+                print(f'\n\n ----- Reached Page {i}, saving dataframe to {self.scraped_filename} ----- \n\n')
+                self.df.to_csv(self.scraped_filename, index=False)
 
-        print(f'Total time for {i - table.index.start} pages is {round(time.time() - start, 2)} seconds')
+        print(f'Total time for {i - self.table.index.start} pages is {round(time.time() - start, 2)} seconds')
 
-        df.to_csv(scraped_filename, index=False)
+        self.df.to_csv(self.scraped_filename, index=False)
+
+
+if __name__ == "__main__":
+    name = sys.argv[0]
+    datapath = '/content/drive/MyDrive/Project/Data/'
+    scraper = Scraper(data_path=datapath, file_name=name)
+    scraper.scrape()
