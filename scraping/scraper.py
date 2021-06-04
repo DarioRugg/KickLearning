@@ -249,7 +249,7 @@ class Scraper:
 
 
 if __name__ == "__main__":
-    name = sys.argv[0]
+    name = sys.argv[1]
     datapath = '/content/drive/MyDrive/Project/Data/'
     scraper = Scraper(data_path=datapath, file_name=name)
     scraper.scrape()
