@@ -58,7 +58,6 @@ class Scraper:
             self.table = self.table[self.df.index.stop:]
 
     def scrape(self):
-
         global i
         start = time.time()
         k = False
@@ -214,7 +213,7 @@ class Scraper:
                         proxy = self.proxy_list.pop(random.choice(len(self.proxy_list))).get_address()
                         if len(self.proxy_list) == 0:
                             req_proxy = RequestProxy()
-                            proxy_list = req_proxy.get_proxy_list()
+                            self.proxy_list = req_proxy.get_proxy_list()
                         http_proxy = 'http://' + proxy
                         https_proxy = 'https://' + proxy
                         self.proxyDict = {
