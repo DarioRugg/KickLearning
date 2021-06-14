@@ -58,7 +58,6 @@ class Scraper:
             self.table = self.table[self.df.index.stop:]
 
     def scrape(self):
-
         global i
         start = time.time()
         k = False
@@ -89,7 +88,7 @@ class Scraper:
 
             while not successful:
                 try:
-                    rs = [fs.get(url, timeout=10), fs.post("https://www.kickstarter.com/graph", proxies=proxyDict,
+                    rs = [fs.get(url, timeout=10), fs.post("https://www.kickstarter.com/graph", proxies=self.proxyDict,
                                                            headers=headers,
                                                            json={
                                                                "operationName": "Campaign",
@@ -190,7 +189,7 @@ class Scraper:
                                 self.proxy_list = req_proxy.get_proxy_list()
                             http_proxy = 'http://' + proxy
                             https_proxy = 'https://' + proxy
-                            proxyDict = {
+                            self.proxyDict = {
                                 "http": http_proxy,
                                 "https": https_proxy,
                             }
@@ -214,10 +213,10 @@ class Scraper:
                         proxy = self.proxy_list.pop(random.choice(len(self.proxy_list))).get_address()
                         if len(self.proxy_list) == 0:
                             req_proxy = RequestProxy()
-                            proxy_list = req_proxy.get_proxy_list()
+                            self.proxy_list = req_proxy.get_proxy_list()
                         http_proxy = 'http://' + proxy
                         https_proxy = 'https://' + proxy
-                        proxyDict = {
+                        self.proxyDict = {
                             "http": http_proxy,
                             "https": https_proxy,
                         }
@@ -231,7 +230,7 @@ class Scraper:
                             self.proxy_list = req_proxy.get_proxy_list()
                         http_proxy = 'http://' + proxy
                         https_proxy = 'https://' + proxy
-                        proxyDict = {
+                        self.proxyDict = {
                             "http": http_proxy,
                             "https": https_proxy,
                         }
@@ -249,7 +248,7 @@ class Scraper:
 
 
 if __name__ == "__main__":
-    name = sys.argv[0]
+    name = sys.argv[1]
     datapath = '/content/drive/MyDrive/Project/Data/'
     scraper = Scraper(data_path=datapath, file_name=name)
     scraper.scrape()
