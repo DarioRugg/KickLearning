@@ -1,5 +1,6 @@
 import pandas as pd
 import json
+import re
 
 def get_categories(entry):
     if "category" not in entry.keys(): return pd.Series()
