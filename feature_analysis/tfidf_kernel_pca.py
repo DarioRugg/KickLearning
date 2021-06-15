@@ -29,7 +29,7 @@ vectorizer = TfidfVectorizer(stop_words=stopwords.words('english'))
 features_dataset = vectorizer.fit_transform(corpus)
 # print(vectorizer.get_feature_names())
 
-# print(features_dataset.shape)
+print(features_dataset.shape)
 
 
 # for text embeddings information
@@ -38,3 +38,6 @@ transformer = KernelPCA(n_components=2, kernel="rbf")
 features_dataset_transformed = transformer.fit_transform(features_dataset)
 
 print(features_dataset_transformed.shape)
+
+def ciao():
+    pass
