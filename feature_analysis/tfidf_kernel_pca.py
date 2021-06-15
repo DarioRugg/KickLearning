@@ -4,10 +4,10 @@ import string
 
 # to be done:
 # legmatization/stamming removing stopwords and punctation
+# commenst
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.corpus import stopwords
-from nltk.corpus import
 
 from sklearn.decomposition import KernelPCA
 
@@ -25,6 +25,9 @@ symbols = "!\"#$%&()*+-./:;<=>?@[\]^_`{|}~\n"
 for i in symbols:
     data = np.char.replace(data, i, ' ')
 re.sub(symbols, )
+
+
+
 vectorizer = TfidfVectorizer(stop_words=stopwords.words('english'))
 features_dataset = vectorizer.fit_transform(corpus)
 # print(vectorizer.get_feature_names())
