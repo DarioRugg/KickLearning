@@ -241,9 +241,10 @@ class Scraper:
             if i % 500 == 0:
                 print(f'\n\n ----- Reached Page {i}, saving dataframe to {self.scraped_filename} ----- \n\n')
                 self.df.to_csv(self.scraped_filename, index=False)
-
-        print(f'Total time for {i - self.table.index.start} pages is {round(time.time() - start, 2)} seconds')
-
+        try:
+            print(f'Total time for {i - self.table.index.start} pages is {round(time.time() - start, 2)} seconds')
+        except:
+            print('Scraping of this file was completed already!')
         self.df.to_csv(self.scraped_filename, index=False)
 
 
