@@ -244,7 +244,7 @@ class Scraper:
         try:
             print(f'Total time for {i - self.table.index.start} pages is {round(time.time() - start, 2)} seconds')
         except:
-            print('Scraping of this file was completed already!')
+            print(f'Scraping of this file was completed already! \n \nLength of the dataframe is {len(self.df)} rows.
         self.df.to_csv(self.scraped_filename, index=False)
 
 
