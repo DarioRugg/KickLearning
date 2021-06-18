@@ -202,12 +202,12 @@ class Scraper:
                     break
 
                 except:
-                    if r and r.status_code == 200:
+                    if r is not None and r.status_code == 200:
                         time.sleep(1.5)
                         print('Problems parsing, scraping skipped!!')
                         self.df.loc[i] = self.table.loc[i]
                         successful = True
-                    elif r and r.status_code == 429:
+                    elif r is not None and r.status_code == 429:
                         print("Too many requests, rotate ip")
                         time.sleep(5)
                         proxy = self.proxy_list.pop(random.choice(len(self.proxy_list))).get_address()
@@ -220,6 +220,11 @@ class Scraper:
                             "http": http_proxy,
                             "https": https_proxy,
                         }
+                    elif r is not None and r.status_code == 404:
+                      time.sleep(1.5)
+                      print("Page does not exist (anymore), skipping!!")
+                      self.df.loc[i] = self.table.loc[i]
+                      successful = True
 
                     else:
                         print("Bad Proxy")
