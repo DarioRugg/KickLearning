@@ -202,12 +202,12 @@ class Scraper:
                     break
 
                 except:
-                    if r and r.status_code == 200:
+                    if r is not None and r.status_code == 200:
                         time.sleep(1.5)
                         print('Problems parsing, scraping skipped!!')
                         self.df.loc[i] = self.table.loc[i]
                         successful = True
-                    elif r and r.status_code == 429:
+                    elif r is not None and r.status_code == 429:
                         print("Too many requests, rotate ip")
                         time.sleep(5)
                         proxy = self.proxy_list.pop(random.choice(len(self.proxy_list))).get_address()
@@ -220,6 +220,11 @@ class Scraper:
                             "http": http_proxy,
                             "https": https_proxy,
                         }
+                    elif r is not None and r.status_code == 404:
+                      time.sleep(1.5)
+                      print("Page does not exist (anymore), skipping!!")
+                      self.df.loc[i] = self.table.loc[i]
+                      successful = True
 
                     else:
                         print("Bad Proxy")
@@ -241,9 +246,10 @@ class Scraper:
             if i % 500 == 0:
                 print(f'\n\n ----- Reached Page {i}, saving dataframe to {self.scraped_filename} ----- \n\n')
                 self.df.to_csv(self.scraped_filename, index=False)
-
-        print(f'Total time for {i - self.table.index.start} pages is {round(time.time() - start, 2)} seconds')
-
+        try:
+            print(f'Total time for {i - self.table.index.start} pages is {round(time.time() - start, 2)} seconds')
+        except:
+            print(f'Scraping of this file was completed already! \n \nLength of the dataframe is {len(self.df)} rows.')
         self.df.to_csv(self.scraped_filename, index=False)
 
 
