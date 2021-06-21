@@ -72,7 +72,11 @@ class TextEncoder:
             print("You must first fit on the data")
             raise e
 
-    def complete_pipeline(self, fit_on_data=False):
+    def complete_pipeline(self, data=None, fit_on_data=False):
+
+        # getting the new data if it's passed to the function
+        if data is not None: self.new_data(data)
+
         self.preprocess()
 
         try:
