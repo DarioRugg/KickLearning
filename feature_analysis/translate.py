@@ -16,7 +16,7 @@ polyglot_logger.setLevel("ERROR")
 
 
 class TextAnalysis:
-    def __init__(self, data_path, file_name, print_time=True, batch_size=60, device='auto'):
+    def __init__(self, data_path, file_name, print_time=True, batch_size=50, device='auto'):
         self.file_name = file_name
         self.file_path = join(data_path, file_name)
         save_path = data_path.replace('Scraped', 'Translated')
@@ -144,7 +144,11 @@ class TextAnalysis:
 
 if __name__ == '__main__':
     filename = sys.argv[1]
+    try:
+        batch = sys.argv[2]
+    except:
+        batch = 50
     datapath = join('.', 'drive', 'MyDrive', 'Project', 'Data', 'Scraped')
-    analyzer = TextAnalysis(data_path=datapath, file_name=filename)
+    analyzer = TextAnalysis(data_path=datapath, file_name=filename, batch_size=batch)
     analyzer.translate()
 
