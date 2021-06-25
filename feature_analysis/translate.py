@@ -145,7 +145,7 @@ class TextAnalysis:
 if __name__ == '__main__':
     filename = sys.argv[1]
     try:
-        batch = sys.argv[2]
+        batch = int(sys.argv[2])
     except:
         batch = 50
     datapath = join('.', 'drive', 'MyDrive', 'Project', 'Data', 'Scraped')
