@@ -116,7 +116,7 @@ class Scraper:
                             if p.find(text=True) != None:
                                 bio_text.append(p.find(text=True))
 
-                        bio_text = ' '.join(bio_text)
+                        bio_text = '\n'.join(bio_text)
                     else:
                         bio_text = None
                     ## Facebook
@@ -165,7 +165,7 @@ class Scraper:
                     n_images = len(story.find_all('img')) - n_gifs
 
                     # text
-                    story_text = ' '.join([p for p in story.find_all(text=True) if i not in ['\n', ' ']])
+                    story_text = '\n'.join([p for p in story.find_all(text=True) if p not in ['\n', ' ']])
 
                     risks = result["data"]["project"]["risks"]
 
