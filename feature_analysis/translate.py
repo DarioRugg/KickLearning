@@ -1,7 +1,7 @@
 from os.path import join, exists
 from os import mkdir
 import pandas as pd
-from transformers import MarianMTModel, MarianTokenizer
+from transformers import MarianMTModel, MarianTokenizer, logging
 import numpy as np
 from polyglot.detect import Detector
 from transformers.hf_api import HfApi
@@ -11,7 +11,7 @@ from polyglot.detect.base import logger as polyglot_logger
 import time
 import regex
 import sys
-
+logging.set_verbosity_error()
 polyglot_logger.setLevel("ERROR")
 
 
@@ -108,8 +108,10 @@ class TextAnalysis:
             set(map(lambda x: x.split('-')[2] if 'en' in x.split('-')[3:] else None, self.suffix)))
         set_l = set_l.intersection(set(pysbd.languages.LANGUAGE_CODES.keys()))
         set_l = set_l.union({'sv'})
-
+        c = 0
         for l in set_l:
+            c+=1
+            print(f'Translating from language {l}, {len(set_l) - c} more languages to do. \nElapsed time: {self.__catch_time("m")} minutes')
             temp = self.df.loc[self.df['lang'] == l]
             text_list = list(map(str, temp[['story']].to_numpy().flatten()))
             model_name = f'Helsinki-NLP/opus-mt-{l}-en'
@@ -138,7 +140,6 @@ class TextAnalysis:
         if self.time:
             print(f"Total time for the algorithm was {self.__catch_time('m')} minutes")
         self.df.to_csv(self.save_file, index=False)
-        print(f"Dataframe with translated text in the 'story' field was saved to {self.save_file}")
 
 
 if __name__ == '__main__':
