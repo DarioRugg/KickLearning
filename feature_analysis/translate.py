@@ -138,6 +138,7 @@ class TextAnalysis:
         if self.time:
             print(f"Total time for the algorithm was {self.__catch_time('m')} minutes")
         self.df.to_csv(self.save_file, index=False)
+        print(f"Dataframe with translated text in the 'story' field was saved to {self.save_file}")
 
 
 if __name__ == '__main__':
