@@ -31,7 +31,7 @@ class TextAnalysis:
         self.df.loc[:, 'lang'] = self.df['story'].apply(self.detect_lang).apply(self.glob_lang)
         self.__nmt_languages()
         self.time = print_time
-
+        self.segment_langs = set(pysbd.languages.LANGUAGE_CODES.keys())
         self.batch = batch_size
         if device == 'auto' or device == 'gpu':
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -88,9 +88,10 @@ class TextAnalysis:
     def filter_languages(self):
         self.start = time.time()
         multi = {x for x in set(self.df['lang']) if 'multi_' in x}
+        
         for l in multi:
             lang = l.split('_')[1]
-            seg = pysbd.Segmenter(language=lang if lang != 'sv' else 'da')
+            seg = pysbd.Segmenter(language=lang if lang in self.segment_langs else 'en')
             temp = self.df.loc[self.df['lang'] == l]
             text_list = list(map(str, temp[['story']].to_numpy().flatten()))
             filtered = list(map(lambda x: self.__primary_lang_filter(x, seg, lang), text_list))
@@ -106,8 +107,7 @@ class TextAnalysis:
         set_l = set(self.df['lang'])
         set_l = set_l.intersection(
             set(map(lambda x: x.split('-')[2] if 'en' in x.split('-')[3:] else None, self.suffix)))
-        set_l = set_l.intersection(set(pysbd.languages.LANGUAGE_CODES.keys()))
-        set_l = set_l.union({'sv'})
+        
         c = 0
         for l in set_l:
             c+=1
@@ -117,7 +117,7 @@ class TextAnalysis:
             model_name = f'Helsinki-NLP/opus-mt-{l}-en'
             tokenizer = MarianTokenizer.from_pretrained(model_name)
             model = MarianMTModel.from_pretrained(model_name).to(self.device)
-            seg = pysbd.Segmenter(language=l if l != 'sv' else 'da')
+            seg = pysbd.Segmenter(language=l if l in self.segment_langs else 'en')
             translations = []
             for text in text_list:
                 inp = seg.segment(text)
@@ -147,3 +147,4 @@ if __name__ == '__main__':
     datapath = join('.', 'drive', 'MyDrive', 'Project', 'Data', 'Scraped')
     analyzer = TextAnalysis(data_path=datapath, file_name=filename)
     analyzer.translate()
+
