@@ -27,7 +27,6 @@ class TextAnalysis:
             r"\s*You\'ll\s*need\s*an\s*HTML5\s*capable\s*browser\s*to\s*see\s*this\s*content\s*\.\s*(\n\s)*\s*|\s*Play\s*(\n\s)+\s*|/\s*Indicator\s*Bar\s*\d\s*(\n\s)*|/\s*Animation\s*Variables\s*(\n\s)\s*|(Replay|Play)\s*with\s*sound\s*(\n\s)+|\xa0")
         self.df = pd.read_csv(self.file_path)
         self.bad_chars = regex.compile(r"\p{Cc}|\p{Cs}")
-        self.df.loc[:, 'story'] = self.df.loc[:, 'story'].apply(self.__remove_html_and_special)
         self.df.loc[:, 'lang'] = self.df['story'].apply(self.detect_lang).apply(self.glob_lang)
         self.__nmt_languages()
         self.time = print_time
@@ -124,13 +123,13 @@ class TextAnalysis:
                 if len(inp) > batch_size:
                     all_decoded = []
                     for batch in np.array_split(inp, np.ceil(len(inp) / batch_size)):
-                        tok = tokenizer(batch.tolist(), return_tensors="pt", padding=True).to(self.device)
+                        tok = tokenizer(batch.tolist(), return_tensors="pt", padding='longest', truncation=True).to(self.device)
                         translated = model.generate(**tok)
                         decoded = ' '.join([tokenizer.decode(t, skip_special_tokens=True) for t in translated])
                         all_decoded.append(decoded)
                     translations.append(' '.join(all_decoded))
                 else:
-                    tok = tokenizer(inp, return_tensors="pt", padding=True).to(self.device)
+                    tok = tokenizer(inp, return_tensors="pt", padding='longest', truncation=True).to(self.device)
                     translated = model.generate(**tok)
                     decoded = ' '.join([tokenizer.decode(t, skip_special_tokens=True) for t in translated])
                     translations.append(decoded)
@@ -139,6 +138,8 @@ class TextAnalysis:
             torch.cuda.empty_cache()
         if self.time:
             print(f"Total time for the algorithm was {self.__catch_time('m')} minutes")
+        
+        self.df.loc[:, 'story'] = self.df.loc[:, 'story'].apply(self.__remove_html_and_special)
         self.df.to_csv(self.save_file, index=False)
 
 
@@ -147,8 +148,7 @@ if __name__ == '__main__':
     try:
         batch = int(sys.argv[2])
     except:
-        batch = 50
+        batch = 60
     datapath = join('.', 'drive', 'MyDrive', 'Project', 'Data', 'Scraped')
     analyzer = TextAnalysis(data_path=datapath, file_name=filename, batch_size=batch)
     analyzer.translate()
-
