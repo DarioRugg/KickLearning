@@ -72,23 +72,30 @@ class TextEncoder:
             print("You must first fit on the data")
             raise e
 
-    def complete_pipeline(self, data=None, fit_on_data=False):
+    def fit_tfidf_pipeline(self, data=None):
+
+        # getting the new data if it's passed to the function
+        if data is not None: self.new_data(data)
+
+        self.preprocess()
+        self.tfidf_fit()
+
+    def transform_pipeline(self, data=None, fit_on_data=False):
 
         # getting the new data if it's passed to the function
         if data is not None: self.new_data(data)
 
         self.preprocess()
 
+        if fit_on_data: self.tfidf_fit()
+
         try:
-
-            if fit_on_data: self.tfidf_fit()
             self.tfidf_transform()
-
-            if fit_on_data: self.pca_fit()
-            self.pca_transform()
-
         except NotFittedError as e:
             print("You can also set 'fit_on_data=True'")
             raise e
+
+        self.pca_fit()
+        self.pca_transform()
 
         return self.get_data()
