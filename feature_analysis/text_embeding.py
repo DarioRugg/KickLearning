@@ -1,4 +1,5 @@
 import unicodedata
+import numpy as np
 
 from sklearn.exceptions import NotFittedError
 
@@ -27,6 +28,8 @@ class TextEncoder:
         self.pca_transformer = KernelPCA(n_components=kpca_n_components, kernel="rbf")
 
     def _preprocessing(self, text):
+        if text is np.nan: return np.nan
+
         line = text.lower()
 
         word = line.split()
