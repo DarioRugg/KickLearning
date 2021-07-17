@@ -9,48 +9,38 @@ from nltk.corpus import stopwords
 from nltk.stem import SnowballStemmer
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import KernelPCA
+from sklearn.preprocessing import normalize 
+from sklearn.decomposition import PCA
+
+import pickle as pk
+
 
 nltk.download('stopwords', quiet=True)
 
 
 class TextEncoder:
-    def __init__(self, kpca_n_components=7, data=None):
+    def __init__(self, pca_var_explained=0.8, data=None):
 
         self.data = data
 
         self.stop_words = set(stopwords.words('english'))
-        self.tokenizer = RegexpTokenizer(r'\w+')
+        self.tokenizer = RegexpTokenizer(r'[0-9]*[a-zA-Z]+[0-9]*|20[0-9]{2}|1[0-9]{3}')
         self.stammer = SnowballStemmer(language="english")
 
-        self.tfidf_transformer = TfidfVectorizer(stop_words=stopwords.words('english'))
+        self.tfidf_transformer = TfidfVectorizer(max_df=0.8, min_df=0.05)
 
-        self.pca_transformer = KernelPCA(n_components=kpca_n_components, kernel="rbf")
+        self.pca_transformer = PCA(n_components=0.8, random_state=1234)
 
     def _preprocessing(self, text):
-        if text is np.nan: return np.nan
-
         line = text.lower()
 
-        word = line.split()
+        words = self.tokenizer.tokenize(text)
         # removing stop words
-        words = filter(lambda w: w not in self.stop_words, word)
-        # removing punctuation from each word
-        punct_remove = list(map(lambda w: " ".join(self.tokenizer.tokenize(w)), words))
+        words = filter(lambda w: w not in self.stop_words, words)
         # removing stem
-        stemmed = list(map(self.stammer.stem, punct_remove))
-        # removing Accent
-        accents = list(
-            map(lambda w: unicodedata.normalize(u'NFKD', w).encode('ascii', 'ignore').decode('utf8'), stemmed))
-        line = " ".join(accents)
+        stemmed = list(map(self.stammer.stem, words))
 
-        return line.strip()
-
-    def new_data(self, data):
-        self.data = data
-
-    def get_data(self):
-        return self.data
+        return " ".join(stemmed)
 
     def preprocess(self):
         self.data = list(map(self._preprocessing, self.data))
@@ -75,30 +65,44 @@ class TextEncoder:
             print("You must first fit on the data")
             raise e
 
-    def fit_tfidf_pipeline(self, data=None):
+    def fit_pipeline(self, data=None):
 
         # getting the new data if it's passed to the function
-        if data is not None: self.new_data(data)
+        if data is not None: self.data = data
 
         self.preprocess()
         self.tfidf_fit()
+        self.tfidf_transform()
 
-    def transform_pipeline(self, data=None, fit_on_data=False):
+        # sample_idx = np.random.choice(self.data.shape[0], size=round(self.data.shape[0]*0.25), replace=False)
+        # self.data = self.data[sample_idx, :]
+        
+        self.data = self.data.toarray()
+
+        # normalizing TfIdf
+        self.data = normalize(self.data)
+
+        self.pca_fit()
+
+    def transform_pipeline(self, data=None):
 
         # getting the new data if it's passed to the function
-        if data is not None: self.new_data(data)
+        if data is not None: self.data = data
 
         self.preprocess()
 
-        if fit_on_data: self.tfidf_fit()
+        # transform TfIdf
+        self.tfidf_transform()
+        
+        self.data = self.data.toarray()
 
-        try:
-            self.tfidf_transform()
-        except NotFittedError as e:
-            print("You can also set 'fit_on_data=True'")
-            raise e
+        # normalizing TfIdf
+        self.data = normalize(self.data)
 
-        self.pca_fit()
         self.pca_transform()
 
-        return self.get_data()
+        return self.data
+    
+    def save_object(self, path):
+        pk.dump(self, open(path,"wb"))
+        print(f"saved object in pikle file")
