@@ -149,6 +149,6 @@ if __name__ == '__main__':
         batch = int(sys.argv[2])
     except:
         batch = 60
-    datapath = join('.', 'drive', 'MyDrive', 'Project', 'Data', 'Scraped')
+    datapath = join('..', 'drive', 'MyDrive', 'Project', 'Data', 'Scraped')
     analyzer = TextAnalysis(data_path=datapath, file_name=filename, batch_size=batch)
     analyzer.translate()
